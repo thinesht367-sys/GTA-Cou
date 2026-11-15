@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>GTA 6 Countdown</title>
+
+<style>
+body {
+  margin: 0;
+  background: transparent;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+#timer {
+  font-size: 55px;
+  font-weight: 900;
+  color: white;
+  text-shadow:
+    0 0 8px white,
+    0 0 18px white;
+}
+
+.unit {
+  display: inline-block;
+  margin: 0 12px;
+}
+
+small {
+  display: block;
+  margin-top: 4px;
+  font-size: 17px;
+  font-weight: bold;
+  color: white;
+}
+
+/* Start button */
+#startButton {
+  margin-top: 20px;
+  padding: 10px 22px;
+  background: white;
+  color: black;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div id="timer">
+  <span class="unit">
+    <span id="days">0</span>
+    <small>DAYS</small>
+  </span>
+
+  <span class="unit">
+    <span id="hours">0</span>
+    <small>HOURS</small>
+  </span>
+
+  <span class="unit">
+    <span id="minutes">0</span>
+    <small>MINUTES</small>
+  </span>
+
+  <span class="unit">
+    <span id="seconds">0</span>
+    <small>SECONDS</small>
+  </span>
+</div>
+
+<button id="startButton">START COUNTDOWN</button>
+
+<script>
+const target =
+  new Date("2026-11-19T00:00:00+05:30").getTime();
+
+let started = false;
+let timerInterval = null;
+let audioContext = null;
+
+function tickSound() {
+  if (!audioContext) return;
+
+  const oscillator = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+
+  oscillator.type = "square";
+  oscillator.frequency.setValueAtTime(900, audioContext.currentTime);
+
+  gain.gain.setValueAtTime(0.06, audioContext.currentTime);
+  gain.gain.exponentialRampToValueAtTime(
+    0.001,
+    audioContext.currentTime + 0.07
+  );
+
+  oscillator.connect(gain);
+  gain.connect(audioContext.destination);
+
+  oscillator.start();
+  oscillator.stop(audioContext.currentTime + 0.07);
+}
+
+function updateTimer() {
+  let distance = target - Date.now();
+
+  if (distance <= 0) {
+    distance = 0;
+
+    document.getElementById("days").textContent = 0;
+    document.getElementById("hours").textContent = 0;
+    document.getElementById("minutes").textContent = 0;
+    document.getElementById("seconds").textContent = 0;
+
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+
+    return;
+  }
+
+  document.getElementById("days").textContent =
+    Math.floor(distance / 86400000);
+
+  document.getElementById("hours").textContent =
+    Math.floor((distance % 86400000) / 3600000);
+
+  document.getElementById("minutes").textContent =
+    Math.floor((distance % 3600000) / 60000);
+
+  document.getElementById("seconds").textContent =
+    Math.floor((distance % 60000) / 1000);
+}
+
+document.getElementById("startButton").addEventListener("click", () => {
+  if (started) return;
+
+  started = true;
+
+  audioContext = new (
+    window.AudioContext || window.webkitAudioContext
+  )();
+
+  document.getElementById("startButton").style.display = "none";
+
+  updateTimer();
+
+  tickSound();
+
+  timerInterval = setInterval(() => {
+    updateTimer();
+
+    if (target - Date.now() > 0) {
+      tickSound();
+    }
+  }, 1000);
+});
+</script>
+
+</body>
+</html>
